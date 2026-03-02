@@ -21,11 +21,24 @@ jobs:
           curl -v -H "Accept: application/vnd.github+json" \
                -H "Authorization: Bearer ${{ secrets.COPILOT_TOKEN }}" \
                -H "X-GitHub-Api-Version: 2022-11-28" \
-               https://api.github.com/enterprises/vtpl-xen/copilot/metrics
+               https://api.github.com/enterprises/YOUR_ENTERPRISE/copilot/metrics \
+               -o metrics.json
 
       - name: Extract download link
         run: |
+          if [ ! -f metrics.json ]; then
+            echo "metrics.json not found"
+            exit 1
+          fi
+
           DOWNLOAD_URL=$(jq -r '.download_links[0]' metrics.json)
+      
+          if [ "$DOWNLOAD_URL" = "null" ]; then
+            echo "Download URL is null"
+            cat metrics.json
+            exit 1
+          fi
+
           curl "$DOWNLOAD_URL" -o report.json
 
       - name: Commit report file
